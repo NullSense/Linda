@@ -40,6 +40,29 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), Error> {
     Ok(())
 }
 
+fn parse_request_line(request: &str) -> Result<Request, ()> {
+    let mut parts = request.split_whitespace();
+
+    let method = parts.next().ok_or(())?;
+    // We only accept GET requests
+    if !method.contains("GET") {
+        return Err(());
+    }
+
+    let uri = parts.next().ok_or(())?;
+    if !Path::new(uri).exists() {
+        return Err(());
+    }
+
+    let http_version = parts.next().ok_or(())?;
+
+    Ok(Request {
+        method,
+        uri,
+        http_version,
+    })
+}
+
 fn main() {
     simple_logger::init().unwrap();
     info!("Starting server...");
