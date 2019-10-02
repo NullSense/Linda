@@ -2,9 +2,10 @@
 extern crate log;
 extern crate simple_logger;
 
+use std::error::Error;
 use std::fmt;
 use std::fs;
-use std::io::{Error, Read, Write};
+use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
 
@@ -27,34 +28,37 @@ impl<'a> fmt::Display for Request<'a> {
     }
 }
 
-fn parse_request_line(request: &str) -> Result<Request, ()> {
+fn parse_request_line(request: &str) -> Result<Request, Box<dyn Error>> {
     let mut parts = request.split_whitespace();
 
-    let method = parts.next().ok_or(())?;
+    let method = parts.next().ok_or("Method not specified")?;
     // We only accept GET requests
     if method != "GET" {
-        return Err(());
+        Err("Unsupported method")?;
     }
 
-    let uri = parts.next().ok_or(())?;
-    let uri_path = Path::new(uri);
-    if !uri_path.exists() {
-        return Err(());
+    let uri = Path::new(parts.next().ok_or("URI not specified")?);
+    let norm_uri = uri.to_str().expect("Invalid unicode!");
+
+    const ROOT: &str = "/home/ongo/Programming/linda";
+
+    if !Path::new(&format!("{}{}", ROOT, norm_uri)).exists() {
+        Err("Requested resource does not exist")?;
     }
 
-    let http_version = parts.next().ok_or(())?;
+    let http_version = parts.next().ok_or("HTTP version not specified")?;
     if http_version != "HTTP/1.1" {
-        return Err(());
+        Err("Unsupported HTTP version, use HTTP/1.1")?;
     }
 
     Ok(Request {
         method,
-        uri: uri_path,
+        uri,
         http_version,
     })
 }
 
-fn handle_connection(mut stream: TcpStream) -> Result<(), Error> {
+fn handle_connection(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
     // 512 bytes is enough for a toy HTTP server
     let mut buffer = [0; 512];
 
@@ -66,13 +70,16 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), Error> {
 
     match parse_request_line(&request_line) {
         Ok(request) => {
-            info!("\n{}", request);
+            info!("Request: {}", &request);
+
             let contents = fs::read_to_string("index.html").unwrap();
             let response = format!("{}{}", "HTTP/1.1 200 OK\r\n\r\n", contents);
+
+            info!("Response: {}", &response);
             stream.write(response.as_bytes()).unwrap();
             stream.flush().unwrap();
         }
-        Err(()) => error!("Badly formatted request: {}", &request_line),
+        Err(e) => error!("Bad request: {}", e),
     }
 
     Ok(())
