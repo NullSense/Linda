@@ -1,5 +1,4 @@
 //! HTTP request method
-//!
 use self::Inner::*;
 use std::{error, fmt, str};
 
@@ -24,26 +23,44 @@ impl<'a> error::Error for InvalidMethod<'a> {}
 ///
 /// Contains constants for multiple HTTP headers:
 /// e.g. GET, HEAD
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Method(Inner);
 
 /// Get and Head have to be implemented under HTTP/1.1
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 enum Inner {
+    Options,
     Get,
     Head,
+    Post,
+    Put,
+    Delete,
+    Trace,
+    Connect,
 }
 
 impl Method {
+    pub const OPTIONS: Method = Method(Options);
     pub const GET: Method = Method(Get);
     pub const HEAD: Method = Method(Head);
+    pub const POST: Method = Method(Post);
+    pub const PUT: Method = Method(Put);
+    pub const DELETE: Method = Method(Delete);
+    pub const TRACE: Method = Method(Trace);
+    pub const CONNECT: Method = Method(Connect);
 
     /// Return HTTP method as Method object
     #[allow(clippy::should_implement_trait)]
     pub fn from_str(src: &str) -> Result<Method, InvalidMethod> {
         match src {
+            "OPTIONS" => Ok(Method(Options)),
             "GET" => Ok(Method(Get)),
             "HEAD" => Ok(Method(Head)),
+            "POST" => Ok(Method(Post)),
+            "PUT" => Ok(Method(Put)),
+            "DELETE" => Ok(Method(Delete)),
+            "TRACE" => Ok(Method(Trace)),
+            "CONNECT" => Ok(Method(Connect)),
             e => Err(InvalidMethod(e)),
         }
     }
@@ -51,8 +68,14 @@ impl Method {
     /// Return HTTP method as &str
     pub fn as_str(&self) -> &str {
         match self.0 {
+            Options => "OPTIONS",
             Get => "GET",
             Head => "HEAD",
+            Post => "POST",
+            Put => "PUT",
+            Delete => "DELETE",
+            Trace => "TRACE",
+            Connect => "CONNECT",
         }
     }
 }
