@@ -23,11 +23,11 @@ impl<'a> error::Error for InvalidMethod<'a> {}
 ///
 /// Contains constants for multiple HTTP headers:
 /// e.g. GET, HEAD
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Method(Inner);
 
 /// Get and Head have to be implemented under HTTP/1.1
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 enum Inner {
     Get,
     Head,
