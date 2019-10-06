@@ -101,7 +101,7 @@ fn add_file(path: &str) -> Result<Response, Box<dyn Error>> {
         Err(e) => {
             response.status = match e.kind() {
                 ErrorKind::NotFound => {
-                    response.body = Some(fs::read("404.html").expect("test"));
+                    response.body = Some(fs::read("404.html").expect("404.html Not found"));
                     StatusCode::NOT_FOUND
                 }
                 ErrorKind::PermissionDenied => StatusCode::FORBIDDEN,
@@ -126,9 +126,9 @@ pub fn response(request: &Request) -> Result<Response, Box<dyn Error>> {
 /// HTTP Response representation
 #[derive(Default)]
 pub struct Response {
-    pub status: StatusCode,
-    pub body: Option<Vec<u8>>,
-    pub headers: Headers,
+    status: StatusCode,
+    body: Option<Vec<u8>>,
+    headers: Headers,
 }
 
 impl Response {
