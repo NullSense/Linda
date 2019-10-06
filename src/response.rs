@@ -67,6 +67,7 @@ impl ContentType {
     }
 }
 
+#[derive(Default)]
 pub struct Headers {
     content_type: Option<ContentType>,
 }
@@ -91,7 +92,7 @@ fn add_file(path: &str) -> Result<Response, Box<dyn Error>> {
         Ok(contents) => {
             response.body = Some(contents);
 
-            let ext = path.split(".").last().unwrap_or("");
+            let ext = path.split('.').last().unwrap_or("");
             response.headers.content_type =
                 Some(ContentType::from_ext_str(ext).expect("========="));
 
@@ -99,7 +100,10 @@ fn add_file(path: &str) -> Result<Response, Box<dyn Error>> {
         }
         Err(e) => {
             response.status = match e.kind() {
-                ErrorKind::NotFound => StatusCode::NOT_FOUND,
+                ErrorKind::NotFound => {
+                    response.body = Some(fs::read("404.html").expect("test"));
+                    StatusCode::NOT_FOUND
+                }
                 ErrorKind::PermissionDenied => StatusCode::FORBIDDEN,
                 _ => StatusCode::INTERNAL_SERVER_ERROR,
             };
@@ -120,6 +124,7 @@ pub fn response(request: &Request) -> Result<Response, Box<dyn Error>> {
 }
 
 /// HTTP Response representation
+#[derive(Default)]
 pub struct Response {
     pub status: StatusCode,
     pub body: Option<Vec<u8>>,
@@ -145,11 +150,8 @@ impl Response {
         result = format!("HTTP/1.1 {} {}\n", self.status.as_str(), status_reason,);
         result = format!("{}Allow: GET, HEAD\n", result);
 
-        match &self.headers.content_type {
-            Some(content_type) => {
-                result = format!("{}Content-type: {}\n", result, content_type.as_str());
-            }
-            _ => (),
+        if let Some(content_type) = &self.headers.content_type {
+            result = format!("{}Content-type: {}\n", result, content_type.as_str());
         }
 
         let mut bytes = result.as_bytes().to_vec();
@@ -171,11 +173,8 @@ impl fmt::Display for Response {
         // Add header
         result = format!("{}Allow: GET, HEAD\n", result);
 
-        match &self.headers.content_type {
-            Some(content_type) => {
-                result = format!("{}Content-type: {}\n", result, content_type.as_str());
-            }
-            _ => (),
+        if let Some(content_type) = &self.headers.content_type {
+            result = format!("{}Content-type: {}\n", result, content_type.as_str());
         }
 
         writeln!(f, "{}", result)

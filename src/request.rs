@@ -73,7 +73,7 @@ impl<'a> Request<'a> {
 
     /// Set Request HTTP uri
     pub fn uri_mut(&mut self, uri: &'a str) -> Result<&mut Self, Box<dyn Error + 'a>> {
-        self.uri = Request::validate_uri(&uri)?;
+        self.uri = Path::new(uri);
         Ok(self)
     }
 
@@ -84,16 +84,6 @@ impl<'a> Request<'a> {
         }
         self.version = version;
         Ok(self)
-    }
-
-    fn validate_uri(uri: &str) -> Result<&Path, InvalidUri> {
-        const ROOT: &str = "/home/ongo/Programming/linda";
-
-        if Path::new(&format!("{}{}", ROOT, uri)).exists() {
-            Ok(Path::new(uri))
-        } else {
-            Err(InvalidUri(uri))
-        }
     }
 
     /// Create a new Request object with defaults:
