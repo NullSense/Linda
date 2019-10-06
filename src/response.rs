@@ -3,7 +3,7 @@
 use http::StatusCode;
 use std::error::Error;
 use std::io::ErrorKind;
-use std::{error, fmt, fs, str};
+use std::{env, error, fmt, fs, str};
 
 use crate::Method;
 use crate::Request;
@@ -83,9 +83,13 @@ impl Headers {
 }
 
 fn add_file(path: &str, head: bool) -> Result<Response, Box<dyn Error>> {
-    const ROOT: &str = "/home/ongo/Programming/linda";
+    let mut root = String::from("/var/www");
 
-    let path = format!("{}{}", ROOT, path);
+    if env::var("LINDA_ROOT").is_ok() {
+        root = env::var("LINDA_ROOT").unwrap();
+    };
+
+    let path = format!("{}{}", root, path);
     let contents = fs::read(&path);
 
     let mut response = Response::new();
@@ -109,9 +113,8 @@ fn add_file(path: &str, head: bool) -> Result<Response, Box<dyn Error>> {
                     // Set response body to 404.html if file not found
                     // check if method type is not HEAD
                     if !head {
-                        response.body = Some(
-                            fs::read(format!("{}/404.html", ROOT)).expect("404.html Not found"),
-                        );
+                        response.body =
+                            Some(fs::read(format!("{}/404.html", root)).unwrap_or(vec![]));
                     }
                     StatusCode::NOT_FOUND
                 }
@@ -156,13 +159,13 @@ impl Response {
     }
 
     pub fn format_response(&mut self) -> Vec<u8> {
+        // Append Status-Line
+        // Status-Line = HTTP-Version SP Status-Code SP Reason-Phrase CRLF
         let mut result = format!("HTTP/1.1 {}\r\n", self.status);
-        // Append Header
-        result = format!("{}Allow: GET, HEAD\n", result);
 
-        // Append Content-Type
+        // Append Content-Type entity-header
         if let Some(content_type) = &self.headers.content_type {
-            result = format!("{}Content-type: {}\n", result, content_type.as_str());
+            result = format!("{}Content-type: {}\r\n\r\n", result, content_type.as_str());
         }
 
         // Append body (if file)
@@ -170,7 +173,6 @@ impl Response {
         if self.body.is_some() {
             let body = self.body.as_mut().unwrap();
 
-            bytes.append(&mut "\n".as_bytes().to_vec());
             bytes.append(body);
         }
 
@@ -180,13 +182,13 @@ impl Response {
 
 impl fmt::Display for Response {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // Append Status-Line
+        // Status-Line = HTTP-Version SP Status-Code SP Reason-Phrase CRLF
         let mut result = format!("HTTP/1.1 {}\r\n", self.status);
 
-        // Add header
-        result = format!("{}Allow: GET, HEAD\n", result);
-
+        // Append Content-Type entity-header
         if let Some(content_type) = &self.headers.content_type {
-            result = format!("{}Content-type: {}\n", result, content_type.as_str());
+            result = format!("{}Content-type: {}\r\n\r\n", result, content_type.as_str());
         }
 
         writeln!(f, "{}", result)

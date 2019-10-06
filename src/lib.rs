@@ -33,13 +33,12 @@ pub fn handle_connection(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
     match response {
         Ok(mut response) => {
             info!("Response: {}", response);
-
             stream
                 .write(&response.format_response())
                 .expect("Couldn't write response");
             stream.flush().expect("Error flushing stream");
         }
-        Err(e) => error!("{}", e),
+        Err(e) => error!("Response error: {}", e),
     }
 
     Ok(())
