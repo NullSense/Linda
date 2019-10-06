@@ -1,5 +1,4 @@
 //! HTTP request method
-//!
 use self::Inner::*;
 use std::{error, fmt, str};
 
