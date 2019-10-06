@@ -1,13 +1,4 @@
 //! HTTP request type
-//!
-//! # Examples
-//!
-//! ```
-//! use linda::Request;
-//!
-//! let mut request = Request::new();
-//! request.method("GET").unwrap().uri("/").unwrap().version("HTTP/1.1").unwrap();
-//! ```
 
 use std::error::Error;
 use std::path::Path;
@@ -58,7 +49,7 @@ impl<'a> Request<'a> {
     /// Set Request HTTP version
     pub fn version(&mut self, version: &'a str) -> Result<&mut Self, Box<dyn Error>> {
         if version != "HTTP/1.1" {
-            Err(format!("HTTP version {} is not supported.", version))?;
+            return Err(format!("HTTP version {} is not supported.", version).into());
         }
         self.version = version;
         Ok(self)
