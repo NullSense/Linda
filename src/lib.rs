@@ -1,62 +1,31 @@
 use log::{error, info};
 use std::error::Error;
+use std::fs;
 use std::io::{Read, Write};
 use std::net::TcpStream;
-use std::path::Path;
-use std::{fmt, fs};
 
-/// Request-Line = Method SP Request-URI SP HTTP-Version CRLF
-struct Request<'a> {
-    method: &'a str,
-    uri: &'a Path,
-    http_version: &'a str,
-}
+pub mod method;
+pub mod request;
+pub use method::Method;
+pub use request::Request;
 
-impl<'a> fmt::Display for Request<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{} {} {}\r\n",
-            self.method,
-            self.uri.display(),
-            self.http_version
-        )
-    }
-}
-
-fn parse_request_line(request: &str) -> Result<Request, Box<dyn Error>> {
+fn parse_request_line<'a>(request: &'a str) -> Result<Request, Box<dyn Error + 'a>> {
     let mut parts = request.split_whitespace();
 
     let method = parts.next().ok_or("Method not specified")?;
-    // We only accept GET requests
-    if method != "GET" {
-        Err("Unsupported method")?;
-    }
-
-    let uri = Path::new(parts.next().ok_or("URI not specified")?);
-    let norm_uri = uri.to_str().expect("Invalid unicode!");
-
-    const ROOT: &str = "/home/ongo/Programming/linda";
-
-    if !Path::new(&format!("{}{}", ROOT, norm_uri)).exists() {
-        Err("Requested resource does not exist")?;
-    }
-
+    let uri = parts.next().ok_or("URI not specified")?;
     let http_version = parts.next().ok_or("HTTP version not specified")?;
-    if http_version != "HTTP/1.1" {
-        Err("Unsupported HTTP version, use HTTP/1.1")?;
-    }
 
-    Ok(Request {
-        method,
-        uri,
-        http_version,
-    })
+    let mut request = Request::new();
+    request.method(method)?.uri(uri)?.version(http_version)?;
+
+    Ok(request)
 }
 
+#[allow(clippy::unused_io_amount)]
 pub fn handle_connection(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
     // 512 bytes is enough for a toy HTTP server
-    let mut buffer = [0; 512];
+    let mut buffer = [0u8; 1024];
 
     // writes stream into buffer
     stream.read(&mut buffer).unwrap();
@@ -71,7 +40,7 @@ pub fn handle_connection(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
             let contents = fs::read_to_string("index.html").unwrap();
             let response = format!("{}{}", "HTTP/1.1 200 OK\r\n\r\n", contents);
 
-            stream.write(response.as_bytes()).unwrap();
+            stream.write_all(response.as_bytes()).unwrap();
             stream.flush().unwrap();
         }
         Err(e) => error!("Bad request: {}", e),
