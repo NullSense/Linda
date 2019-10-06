@@ -21,6 +21,7 @@ pub fn handle_connection(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
     let request_line = request.lines().next().expect("Request line doesn't exist");
     info!("Request-Line: {}", &request_line);
 
+    // Get response from request_line
     let response = match parse_request_line(&request_line) {
         Ok(request) => response(&request),
         Err(e) => {

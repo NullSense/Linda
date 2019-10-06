@@ -7,7 +7,7 @@ use std::{error, fmt, str};
 use crate::Method;
 
 #[derive(Debug)]
-pub struct InvalidUri<'a>(&'a str);
+struct InvalidUri<'a>(&'a str);
 
 impl<'a> fmt::Display for InvalidUri<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

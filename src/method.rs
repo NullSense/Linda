@@ -40,8 +40,14 @@ enum Inner {
 }
 
 impl Method {
+    pub const OPTIONS: Method = Method(Options);
     pub const GET: Method = Method(Get);
     pub const HEAD: Method = Method(Head);
+    pub const POST: Method = Method(Post);
+    pub const PUT: Method = Method(Put);
+    pub const DELETE: Method = Method(Delete);
+    pub const TRACE: Method = Method(Trace);
+    pub const CONNECT: Method = Method(Connect);
 
     /// Return HTTP method as Method object
     #[allow(clippy::should_implement_trait)]

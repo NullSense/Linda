@@ -1,3 +1,5 @@
+//! HTTP request type
+
 use http::StatusCode;
 use std::error::Error;
 use std::io::ErrorKind;
@@ -7,18 +9,18 @@ use crate::Method;
 use crate::Request;
 
 #[derive(Debug)]
-pub struct InvalidContentType<'a>(&'a str);
-impl<'a> error::Error for InvalidContentType<'a> {}
+pub struct InvalidContentType(String);
+impl error::Error for InvalidContentType {}
 
-impl<'a> fmt::Display for InvalidContentType<'a> {
+impl fmt::Display for InvalidContentType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Invalid Content Type: {}", self.0)
     }
 }
 
-impl<'a> From<&'a str> for InvalidContentType<'a> {
-    fn from(content_type: &'a str) -> Self {
-        InvalidContentType(content_type)
+impl From<&str> for InvalidContentType {
+    fn from(content_type: &str) -> Self {
+        InvalidContentType(content_type.to_string())
     }
 }
 
@@ -48,7 +50,7 @@ impl ContentType {
             "txt" => Ok(ContentType::TEXT),
             "xml" => Ok(ContentType::XML),
             "pdf" => Ok(ContentType::PDF),
-            ext => Err(InvalidContentType(ext)),
+            ext => Err(InvalidContentType(ext.to_string())),
         }
     }
 
@@ -80,7 +82,7 @@ impl Headers {
     }
 }
 
-fn add_file(path: &str) -> Result<Response, Box<dyn Error>> {
+fn add_file(path: &str, head: bool) -> Result<Response, Box<dyn Error>> {
     const ROOT: &str = "/home/ongo/Programming/linda";
 
     let path = format!("{}{}", ROOT, path);
@@ -90,18 +92,27 @@ fn add_file(path: &str) -> Result<Response, Box<dyn Error>> {
 
     match contents {
         Ok(contents) => {
-            response.body = Some(contents);
+            // check if method type is not HEAD
+            if !head {
+                response.body = Some(contents);
+            }
 
+            // Get file extension
             let ext = path.split('.').last().unwrap_or("");
-            response.headers.content_type =
-                Some(ContentType::from_ext_str(ext).expect("========="));
+            response.headers.content_type = Some(ContentType::from_ext_str(ext)?);
 
             Ok(response)
         }
         Err(e) => {
             response.status = match e.kind() {
                 ErrorKind::NotFound => {
-                    response.body = Some(fs::read("404.html").expect("404.html Not found"));
+                    // Set response body to 404.html if file not found
+                    // check if method type is not HEAD
+                    if !head {
+                        response.body = Some(
+                            fs::read(format!("{}/404.html", ROOT)).expect("404.html Not found"),
+                        );
+                    }
                     StatusCode::NOT_FOUND
                 }
                 ErrorKind::PermissionDenied => StatusCode::FORBIDDEN,
@@ -114,7 +125,11 @@ fn add_file(path: &str) -> Result<Response, Box<dyn Error>> {
 
 pub fn response(request: &Request) -> Result<Response, Box<dyn Error>> {
     match *request.method() {
-        Method::GET => add_file(request.uri().to_str().expect("Invalid file URI UTF8")),
+        Method::GET => add_file(
+            request.uri().to_str().expect("Invalid file URI UTF8"),
+            false,
+        ),
+        Method::HEAD => add_file(request.uri().to_str().expect("Invalid file URI UTF8"), true),
         _ => {
             let mut response = Response::new();
             response.status = StatusCode::NOT_IMPLEMENTED;
@@ -141,19 +156,16 @@ impl Response {
     }
 
     pub fn format_response(&mut self) -> Vec<u8> {
-        let mut result;
-        let status_reason = match self.status.canonical_reason() {
-            Some(reason) => reason,
-            None => "",
-        };
-
-        result = format!("HTTP/1.1 {} {}\n", self.status.as_str(), status_reason,);
+        let mut result = format!("HTTP/1.1 {}\r\n", self.status);
+        // Append Header
         result = format!("{}Allow: GET, HEAD\n", result);
 
+        // Append Content-Type
         if let Some(content_type) = &self.headers.content_type {
             result = format!("{}Content-type: {}\n", result, content_type.as_str());
         }
 
+        // Append body (if file)
         let mut bytes = result.as_bytes().to_vec();
         if self.body.is_some() {
             let body = self.body.as_mut().unwrap();
