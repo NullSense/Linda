@@ -31,7 +31,10 @@ pub fn parse_request_line<'a>(request: &'a str) -> Result<Request, Box<dyn Error
     let http_version = parts.next().ok_or("HTTP version not specified")?;
 
     let mut request = Request::new();
-    request.method(method)?.uri(uri)?.version(http_version)?;
+    request
+        .method_mut(method)?
+        .uri_mut(uri)?
+        .version_mut(http_version)?;
 
     Ok(request)
 }
@@ -47,20 +50,35 @@ pub struct Request<'a> {
 
 /// Implement builder for Request
 impl<'a> Request<'a> {
+    /// Get Request method
+    pub fn method(&self) -> &Method {
+        &self.method
+    }
+
+    /// Get Request uri
+    pub fn uri(&self) -> &Path {
+        &self.uri
+    }
+
+    /// Get Request uri
+    pub fn version(&self) -> &str {
+        &self.version
+    }
+
     /// Set Request HTTP method
-    pub fn method(&mut self, method: &'a str) -> Result<&mut Self, Box<dyn Error + 'a>> {
+    pub fn method_mut(&mut self, method: &'a str) -> Result<&mut Self, Box<dyn Error + 'a>> {
         self.method = Method::from_str(method)?;
         Ok(self)
     }
 
     /// Set Request HTTP uri
-    pub fn uri(&mut self, uri: &'a str) -> Result<&mut Self, Box<dyn Error + 'a>> {
+    pub fn uri_mut(&mut self, uri: &'a str) -> Result<&mut Self, Box<dyn Error + 'a>> {
         self.uri = Request::validate_uri(&uri)?;
         Ok(self)
     }
 
     /// Set Request HTTP version
-    pub fn version(&mut self, version: &'a str) -> Result<&mut Self, Box<dyn Error>> {
+    pub fn version_mut(&mut self, version: &'a str) -> Result<&mut Self, Box<dyn Error>> {
         if version != "HTTP/1.1" {
             return Err(format!("HTTP version {} is not supported.", version).into());
         }
