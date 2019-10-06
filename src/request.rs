@@ -7,21 +7,34 @@ use std::{error, fmt, str};
 use crate::Method;
 
 #[derive(Debug)]
-pub struct InvalidUriError<'a>(&'a str);
+pub struct InvalidUri<'a>(&'a str);
 
-impl<'a> fmt::Display for InvalidUriError<'a> {
+impl<'a> fmt::Display for InvalidUri<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Invalid URI: {}", self.0)
     }
 }
 
-impl<'a> From<&'a str> for InvalidUriError<'a> {
+impl<'a> From<&'a str> for InvalidUri<'a> {
     fn from(error: &'a str) -> Self {
-        InvalidUriError(error)
+        InvalidUri(error)
     }
 }
 
-impl<'a> error::Error for InvalidUriError<'a> {}
+impl<'a> error::Error for InvalidUri<'a> {}
+
+pub fn parse_request_line<'a>(request: &'a str) -> Result<Request, Box<dyn Error + 'a>> {
+    let mut parts = request.split_whitespace();
+
+    let method = parts.next().ok_or("Method not specified")?;
+    let uri = parts.next().ok_or("URI not specified")?;
+    let http_version = parts.next().ok_or("HTTP version not specified")?;
+
+    let mut request = Request::new();
+    request.method(method)?.uri(uri)?.version(http_version)?;
+
+    Ok(request)
+}
 
 /// HTTP Request representation
 ///
@@ -55,13 +68,13 @@ impl<'a> Request<'a> {
         Ok(self)
     }
 
-    fn validate_uri(uri: &str) -> Result<&Path, InvalidUriError> {
+    fn validate_uri(uri: &str) -> Result<&Path, InvalidUri> {
         const ROOT: &str = "/home/ongo/Programming/linda";
 
         if Path::new(&format!("{}{}", ROOT, uri)).exists() {
             Ok(Path::new(uri))
         } else {
-            Err(InvalidUriError(uri))
+            Err(InvalidUri(uri))
         }
     }
 
