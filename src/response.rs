@@ -114,7 +114,7 @@ fn add_file(path: &str, head: bool) -> Result<Response, Box<dyn Error>> {
                     // check if method type is not HEAD
                     if !head {
                         response.body =
-                            Some(fs::read(format!("{}/404.html", root)).unwrap_or(vec![]));
+                            Some(fs::read(format!("{}/404.html", root)).unwrap_or_else(|_| vec![]));
                     }
                     StatusCode::NOT_FOUND
                 }
