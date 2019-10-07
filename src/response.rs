@@ -114,7 +114,7 @@ fn add_file(path: &str, head: bool) -> Result<Response, Box<dyn Error>> {
                     // check if method type is not HEAD
                     if !head {
                         response.body =
-                            Some(fs::read(format!("{}/404.html", root)).unwrap_or(vec![]));
+                            Some(fs::read(format!("{}/404.html", root)).unwrap_or_else(|_| vec![]));
                     }
                     StatusCode::NOT_FOUND
                 }
@@ -126,6 +126,7 @@ fn add_file(path: &str, head: bool) -> Result<Response, Box<dyn Error>> {
     }
 }
 
+/// Process Request, returning a Response
 pub fn response(request: &Request) -> Result<Response, Box<dyn Error>> {
     match *request.method() {
         Method::GET => add_file(
@@ -158,6 +159,7 @@ impl Response {
         }
     }
 
+    /// Format Response object and return it as bytes to write to a buffer
     pub fn format_response(&mut self) -> Vec<u8> {
         // Append Status-Line
         // Status-Line = HTTP-Version SP Status-Code SP Reason-Phrase CRLF
@@ -182,15 +184,7 @@ impl Response {
 
 impl fmt::Display for Response {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // Append Status-Line
         // Status-Line = HTTP-Version SP Status-Code SP Reason-Phrase CRLF
-        let mut result = format!("HTTP/1.1 {}\r\n", self.status);
-
-        // Append Content-Type entity-header
-        if let Some(content_type) = &self.headers.content_type {
-            result = format!("{}Content-type: {}\r\n\r\n", result, content_type.as_str());
-        }
-
-        writeln!(f, "{}", result)
+        writeln!(f, "HTTP/1.1 {}", self.status)
     }
 }
