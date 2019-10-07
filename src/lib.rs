@@ -44,7 +44,7 @@ pub fn handle_connection(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
 
     match response {
         Ok(mut response) => {
-            info!("Response: {}", response);
+            info!("Response-Line: {}", response);
             stream.write(&response.format_response())?;
             stream.flush()?;
         }
