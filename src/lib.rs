@@ -3,11 +3,10 @@ pub mod request;
 pub mod response;
 use method::Method;
 use request::{parse_request_line, Request};
-use response::*;
+use response::response;
 
 use log::{error, info};
 use std::error::Error;
-use std::io;
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::{error, fmt};
@@ -18,12 +17,6 @@ struct RequestLineNotFound;
 impl fmt::Display for RequestLineNotFound {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Request-Line not found")
-    }
-}
-
-impl From<io::Error> for RequestLineNotFound {
-    fn from(error: io::Error) -> Self {
-        RequestLineNotFound
     }
 }
 
