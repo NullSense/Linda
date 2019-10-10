@@ -1,9 +1,12 @@
 pub mod method;
 pub mod request;
 pub mod response;
+pub mod threadpool;
+
 use method::Method;
 use request::{get_request_line, parse_request_line, Request};
 use response::response;
+use threadpool::ThreadPool;
 
 use log::{error, info};
 use std::error::Error;
