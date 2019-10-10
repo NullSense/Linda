@@ -20,7 +20,7 @@ pub struct ThreadPool {
 
 impl ThreadPool {
     pub fn new(size: usize) -> Self {
-        // can't have 0 threads
+        // can't have 0 threads, panic
         assert!(size > 0);
 
         let mut workers = Vec::with_capacity(size);
@@ -30,5 +30,12 @@ impl ThreadPool {
         }
 
         ThreadPool { workers }
+    }
+
+    pub fn execute<F>(&self, f: F)
+    where
+        F: FnOnce() + Send + 'static,
+    {
+        let job = Box::new(f);
     }
 }
