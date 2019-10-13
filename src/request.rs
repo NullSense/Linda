@@ -23,6 +23,23 @@ impl<'a> From<&'a str> for InvalidUri<'a> {
 
 impl<'a> error::Error for InvalidUri<'a> {}
 
+#[derive(Debug)]
+struct RequestLineNotFound;
+
+impl fmt::Display for RequestLineNotFound {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Request-Line not found")
+    }
+}
+
+impl error::Error for RequestLineNotFound {}
+
+/// Return a Request-Line given a buffer
+pub fn get_request_line(buffer: &[u8]) -> Result<&str, Box<dyn Error>> {
+    let request = str::from_utf8(&buffer[..])?;
+    Ok(request.lines().next().ok_or(RequestLineNotFound)?)
+}
+
 pub fn parse_request_line<'a>(request: &'a str) -> Result<Request, Box<dyn Error + 'a>> {
     let mut parts = request.split_whitespace();
 

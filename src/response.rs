@@ -34,6 +34,7 @@ enum ContentType {
     SVG,
     XML,
     PDF,
+    ICO,
 }
 
 impl ContentType {
@@ -50,6 +51,7 @@ impl ContentType {
             "txt" => Ok(ContentType::TEXT),
             "xml" => Ok(ContentType::XML),
             "pdf" => Ok(ContentType::PDF),
+            "ico" => Ok(ContentType::ICO),
             ext => Err(InvalidContentType(ext.to_string())),
         }
     }
@@ -65,6 +67,7 @@ impl ContentType {
             ContentType::TEXT => "text/plain",
             ContentType::XML => "application/xml",
             ContentType::PDF => "application/pdf",
+            ContentType::ICO => "image/x-icon",
         }
     }
 }
@@ -89,7 +92,12 @@ fn add_file(path: &str, head: bool) -> Result<Response, Box<dyn Error>> {
         root = env::var("LINDA_ROOT").unwrap();
     };
 
-    let path = format!("{}{}", root, path);
+    let mut path = path.to_string();
+    if path == "/" {
+        path.push_str("index.html");
+    }
+    path = format!("{}{}", root, path);
+
     let contents = fs::read(&path);
 
     let mut response = Response::new();
@@ -115,6 +123,7 @@ fn add_file(path: &str, head: bool) -> Result<Response, Box<dyn Error>> {
                     if !head {
                         response.body =
                             Some(fs::read(format!("{}/404.html", root)).unwrap_or_else(|_| vec![]));
+                        response.headers.content_type = Some(ContentType::HTML);
                     }
                     StatusCode::NOT_FOUND
                 }
