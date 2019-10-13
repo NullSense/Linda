@@ -1,5 +1,7 @@
-# Linda
-An HTTP/1.1 server written in Rust
+
+<h1 align="center">Linda</h1>
+
+<p align="center">An HTTP/1.1 server written in Rust</p>
 
 ![](https://github.com/MrCappuccino/Linda/workflows/Rust/badge.svg) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
