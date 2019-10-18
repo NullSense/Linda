@@ -1,12 +1,12 @@
 //! HTTP request type
 
-use http::StatusCode;
 use std::error::Error;
 use std::io::ErrorKind;
 use std::{env, error, fmt, fs, str};
 
 use crate::Method;
 use crate::Request;
+use std::collections::HashMap;
 
 /// Whenever an unsupported/invalid content type gets requested
 #[derive(Debug)]
@@ -25,6 +25,7 @@ impl From<&str> for InvalidContentType {
     }
 }
 
+#[derive(Hash, Eq, PartialEq, Copy, Clone)]
 enum ContentType {
     CSS,
     HTML,
@@ -40,36 +41,49 @@ enum ContentType {
 
 impl ContentType {
     fn from_ext_str(ext: &str) -> Result<ContentType, InvalidContentType> {
-        match ext {
-            "css" => Ok(ContentType::CSS),
-            "gif" => Ok(ContentType::GIF),
-            "htm" => Ok(ContentType::HTML),
-            "html" => Ok(ContentType::HTML),
-            "jpeg" => Ok(ContentType::JPEG),
-            "jpg" => Ok(ContentType::JPEG),
-            "png" => Ok(ContentType::PNG),
-            "svg" => Ok(ContentType::SVG),
-            "txt" => Ok(ContentType::TEXT),
-            "xml" => Ok(ContentType::XML),
-            "pdf" => Ok(ContentType::PDF),
-            "ico" => Ok(ContentType::ICO),
-            ext => Err(InvalidContentType(ext.to_string())),
+        let content_types: HashMap<&str, ContentType> = [
+            ("css", ContentType::CSS),
+            ("gif", ContentType::GIF),
+            ("htm", ContentType::HTML),
+            ("html", ContentType::HTML),
+            ("jpeg", ContentType::JPEG),
+            ("jpg", ContentType::JPEG),
+            ("png", ContentType::PNG),
+            ("svg", ContentType::SVG),
+            ("txt", ContentType::TEXT),
+            ("xml", ContentType::XML),
+            ("pdf", ContentType::PDF),
+            ("ico", ContentType::ICO),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+        if let Some(content_type) = content_types.get(ext) {
+            Ok(*content_type)
+        } else {
+            Err(InvalidContentType(ext.to_string()))
         }
     }
 
     fn as_str(&self) -> &str {
-        match *self {
-            ContentType::CSS => "text/css",
-            ContentType::GIF => "image/gif",
-            ContentType::HTML => "text/html",
-            ContentType::JPEG => "image/jpeg",
-            ContentType::PNG => "image/png",
-            ContentType::SVG => "image/svg+xml",
-            ContentType::TEXT => "text/plain",
-            ContentType::XML => "application/xml",
-            ContentType::PDF => "application/pdf",
-            ContentType::ICO => "image/x-icon",
-        }
+        let content_types: HashMap<ContentType, &str> = [
+            (ContentType::CSS, "text/css"),
+            (ContentType::GIF, "image/gif"),
+            (ContentType::HTML, "text/html"),
+            (ContentType::HTML, "text/html"),
+            (ContentType::JPEG, "image/jpeg"),
+            (ContentType::JPEG, "image/jpeg"),
+            (ContentType::PNG, "image/png"),
+            (ContentType::SVG, "image/svg+xml"),
+            (ContentType::TEXT, "text/plain"),
+            (ContentType::XML, "application/xml"),
+            (ContentType::PDF, "application/pdf"),
+            (ContentType::ICO, "image/x-icon"),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+        content_types.get(self).unwrap()
     }
 }
 
@@ -83,6 +97,108 @@ impl Headers {
     /// By default the content_type is None
     pub fn new() -> Self {
         Headers { content_type: None }
+    }
+}
+
+#[derive(Hash, Eq, PartialEq, Clone)]
+#[allow(non_camel_case_types)]
+enum StatusCode {
+    CONTINUE,
+    SWITCHING_PROTOCOLS,
+    OK,
+    CREATED,
+    ACCEPTED,
+    NON_AUTHORITATIVE_INFORMATION,
+    NO_CONTENT,
+    RESET_CONTENT,
+    PARTIAL_CONTENT,
+    MULTIPLE_CHOICES,
+    MOVED_PERMANENTLY,
+    FOUND,
+    SEE_OTHER,
+    NOT_MODIFIED,
+    USE_PROXY,
+    TEMPORARY_REDIRECT,
+    BAD_REQUEST,
+    UNAUTHORIZED,
+    PAYMENT_REQUIRED,
+    FORBIDDEN,
+    NOT_FOUND,
+    METHOD_NOT_ALLOWED,
+    NOT_ACCEPTABLE,
+    PROXY_AUTHENTICATION_REQUIRED,
+    REQUEST_TIME_OUT,
+    CONFLICT,
+    GONE,
+    LENGTH_REQUIRED,
+    PRECONDITION_FAILED,
+    REQUEST_ENTITY_TOO_LARGE,
+    REQUEST_URI_TOO_LARGE,
+    UNSUPPORTED_MEDIA_TYPE,
+    REQUEST_RANGE_NOT_SATISFIABLE,
+    EXPECTATION_FAILED,
+    INTERNAL_SERVER_ERROR,
+    NOT_IMPLEMENTED,
+    BAD_GATEWAY,
+    SERVICE_UNAVAILABLE,
+    GATEWAY_TIME_OUT,
+    HTTP_VERSION_NOT_SUPPORTED,
+}
+
+impl Default for StatusCode {
+    fn default() -> Self {
+        StatusCode::OK
+    }
+}
+
+impl fmt::Display for StatusCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let codes: HashMap<StatusCode, i32> = [
+            (StatusCode::CONTINUE, 100),
+            (StatusCode::SWITCHING_PROTOCOLS, 101),
+            (StatusCode::OK, 200),
+            (StatusCode::CREATED, 201),
+            (StatusCode::ACCEPTED, 202),
+            (StatusCode::NON_AUTHORITATIVE_INFORMATION, 203),
+            (StatusCode::NO_CONTENT, 204),
+            (StatusCode::RESET_CONTENT, 205),
+            (StatusCode::PARTIAL_CONTENT, 206),
+            (StatusCode::MULTIPLE_CHOICES, 300),
+            (StatusCode::MOVED_PERMANENTLY, 301),
+            (StatusCode::FOUND, 302),
+            (StatusCode::SEE_OTHER, 303),
+            (StatusCode::NOT_MODIFIED, 304),
+            (StatusCode::USE_PROXY, 305),
+            (StatusCode::TEMPORARY_REDIRECT, 307),
+            (StatusCode::BAD_REQUEST, 400),
+            (StatusCode::UNAUTHORIZED, 401),
+            (StatusCode::PAYMENT_REQUIRED, 402),
+            (StatusCode::FORBIDDEN, 403),
+            (StatusCode::NOT_FOUND, 404),
+            (StatusCode::METHOD_NOT_ALLOWED, 405),
+            (StatusCode::NOT_ACCEPTABLE, 406),
+            (StatusCode::PROXY_AUTHENTICATION_REQUIRED, 407),
+            (StatusCode::REQUEST_TIME_OUT, 408),
+            (StatusCode::CONFLICT, 409),
+            (StatusCode::GONE, 410),
+            (StatusCode::LENGTH_REQUIRED, 411),
+            (StatusCode::PRECONDITION_FAILED, 412),
+            (StatusCode::REQUEST_ENTITY_TOO_LARGE, 413),
+            (StatusCode::REQUEST_URI_TOO_LARGE, 414),
+            (StatusCode::UNSUPPORTED_MEDIA_TYPE, 415),
+            (StatusCode::REQUEST_RANGE_NOT_SATISFIABLE, 416),
+            (StatusCode::EXPECTATION_FAILED, 417),
+            (StatusCode::INTERNAL_SERVER_ERROR, 500),
+            (StatusCode::NOT_IMPLEMENTED, 501),
+            (StatusCode::BAD_GATEWAY, 502),
+            (StatusCode::SERVICE_UNAVAILABLE, 503),
+            (StatusCode::GATEWAY_TIME_OUT, 504),
+            (StatusCode::HTTP_VERSION_NOT_SUPPORTED, 505),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+        write!(f, "{}", codes.get(self).unwrap())
     }
 }
 
