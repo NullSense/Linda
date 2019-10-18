@@ -25,6 +25,7 @@ impl From<&str> for InvalidContentType {
     }
 }
 
+#[derive(Hash, Eq, PartialEq, Copy, Clone)]
 enum ContentType {
     CSS,
     HTML,
@@ -40,36 +41,49 @@ enum ContentType {
 
 impl ContentType {
     fn from_ext_str(ext: &str) -> Result<ContentType, InvalidContentType> {
-        match ext {
-            "css" => Ok(ContentType::CSS),
-            "gif" => Ok(ContentType::GIF),
-            "htm" => Ok(ContentType::HTML),
-            "html" => Ok(ContentType::HTML),
-            "jpeg" => Ok(ContentType::JPEG),
-            "jpg" => Ok(ContentType::JPEG),
-            "png" => Ok(ContentType::PNG),
-            "svg" => Ok(ContentType::SVG),
-            "txt" => Ok(ContentType::TEXT),
-            "xml" => Ok(ContentType::XML),
-            "pdf" => Ok(ContentType::PDF),
-            "ico" => Ok(ContentType::ICO),
-            ext => Err(InvalidContentType(ext.to_string())),
+        let content_types: HashMap<&str, ContentType> = [
+            ("css", ContentType::CSS),
+            ("gif", ContentType::GIF),
+            ("htm", ContentType::HTML),
+            ("html", ContentType::HTML),
+            ("jpeg", ContentType::JPEG),
+            ("jpg", ContentType::JPEG),
+            ("png", ContentType::PNG),
+            ("svg", ContentType::SVG),
+            ("txt", ContentType::TEXT),
+            ("xml", ContentType::XML),
+            ("pdf", ContentType::PDF),
+            ("ico", ContentType::ICO),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+        if let Some(content_type) = content_types.get(ext) {
+            Ok(*content_type)
+        } else {
+            Err(InvalidContentType(ext.to_string()))
         }
     }
 
     fn as_str(&self) -> &str {
-        match *self {
-            ContentType::CSS => "text/css",
-            ContentType::GIF => "image/gif",
-            ContentType::HTML => "text/html",
-            ContentType::JPEG => "image/jpeg",
-            ContentType::PNG => "image/png",
-            ContentType::SVG => "image/svg+xml",
-            ContentType::TEXT => "text/plain",
-            ContentType::XML => "application/xml",
-            ContentType::PDF => "application/pdf",
-            ContentType::ICO => "image/x-icon",
-        }
+        let content_types: HashMap<ContentType, &str> = [
+            (ContentType::CSS, "text/css"),
+            (ContentType::GIF, "image/gif"),
+            (ContentType::HTML, "text/html"),
+            (ContentType::HTML, "text/html"),
+            (ContentType::JPEG, "image/jpeg"),
+            (ContentType::JPEG, "image/jpeg"),
+            (ContentType::PNG, "image/png"),
+            (ContentType::SVG, "image/svg+xml"),
+            (ContentType::TEXT, "text/plain"),
+            (ContentType::XML, "application/xml"),
+            (ContentType::PDF, "application/pdf"),
+            (ContentType::ICO, "image/x-icon"),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+        content_types.get(self).unwrap()
     }
 }
 
