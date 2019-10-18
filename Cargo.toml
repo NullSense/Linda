@@ -1,6 +1,9 @@
 [package]
 name = "linda"
 description = "A multi-threaded HTTP/1.1 server"
+repository = "https://github.com/NullSense/Linda"
+keywords = ["http", "server", "web"]
+categories = ["web-programming"]
 version = "0.1.0"
 authors = ["Aerial <matas234@gmail.com>"]
 edition = "2018"
