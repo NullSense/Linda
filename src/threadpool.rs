@@ -1,3 +1,5 @@
+//! ThreadPool implementation
+
 use log::info;
 use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
@@ -7,6 +9,9 @@ enum Message {
     Terminate,
 }
 
+/// ThreadPool containing Workers & Senders
+///
+/// mspc Senders sending Messages
 pub struct ThreadPool {
     workers: Vec<Worker>,
     sender: mpsc::Sender<Message>,
@@ -66,6 +71,11 @@ impl Worker {
 }
 
 impl ThreadPool {
+    /// Create new thread pool
+    ///
+    /// # Panics
+    ///
+    /// Panics if the thread pool size is <= 0
     pub fn new(size: usize) -> ThreadPool {
         // can't have 0 threads, panic
         assert!(size > 0);
@@ -83,6 +93,7 @@ impl ThreadPool {
         ThreadPool { workers, sender }
     }
 
+    /// Execute job
     pub fn execute<F>(&self, f: F)
     where
         F: FnOnce() + Send + 'static,
