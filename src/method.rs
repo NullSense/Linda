@@ -2,6 +2,7 @@
 use self::Inner::*;
 use std::{error, fmt, str};
 
+/// Returned when an undefined method gets requested
 #[derive(Debug)]
 pub struct InvalidMethod<'a>(&'a str);
 
@@ -40,16 +41,31 @@ enum Inner {
 }
 
 impl Method {
+    /// OPTIONS
     pub const OPTIONS: Method = Method(Options);
+
+    /// GET
     pub const GET: Method = Method(Get);
+
+    /// HEAD
     pub const HEAD: Method = Method(Head);
+
+    /// POST
     pub const POST: Method = Method(Post);
+
+    /// PUT
     pub const PUT: Method = Method(Put);
+
+    /// DELETE
     pub const DELETE: Method = Method(Delete);
+
+    /// TRACE
     pub const TRACE: Method = Method(Trace);
+
+    /// CONNECT
     pub const CONNECT: Method = Method(Connect);
 
-    /// Return HTTP method as Method object
+    /// Return HTTP method as Method object from a &str
     #[allow(clippy::should_implement_trait)]
     pub fn from_str(src: &str) -> Result<Method, InvalidMethod> {
         match src {
@@ -65,7 +81,7 @@ impl Method {
         }
     }
 
-    /// Return HTTP method as &str
+    /// Return HTTP method as &str from an object
     pub fn as_str(&self) -> &str {
         match self.0 {
             Options => "OPTIONS",
@@ -81,7 +97,6 @@ impl Method {
 }
 
 impl Default for Method {
-    /// Set default method to GET
     fn default() -> Method {
         Method::GET
     }
