@@ -24,6 +24,7 @@ use std::net::TcpStream;
 /// * The request was invlid
 /// * Was not able to write out response
 /// * Was not able to flush the stream
+#[allow(clippy::unused_io_amount)]
 pub fn handle_connection(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
     let mut buffer = [0u8; 1024];
 
