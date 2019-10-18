@@ -1,11 +1,15 @@
+pub mod content;
 pub mod method;
 pub mod request;
 pub mod response;
+mod status;
 pub mod threadpool;
 
+use content::ContentType;
 use method::Method;
 use request::{get_request_line, parse_request_line, Request};
 use response::response;
+use status::StatusCode;
 
 use log::{error, info};
 use std::error::Error;
