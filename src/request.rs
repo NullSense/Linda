@@ -40,6 +40,18 @@ pub fn get_request_line(buffer: &[u8]) -> Result<&str, Box<dyn Error>> {
     Ok(request.lines().next().ok_or(RequestLineNotFound)?)
 }
 
+/// Takes in a request line and returns a properly formatted Request
+/// wrapped in a Result<>
+///
+/// # Errors
+///
+/// Propagates errors up if:
+/// * Not specified:
+///     - Request Method
+///     - Request URI
+///     - Request HTTP Version
+/// * If Method invalid (InvalidMethod Error type), see Method
+/// * If the HTTP version is not supported
 pub fn parse_request_line<'a>(request: &'a str) -> Result<Request, Box<dyn Error + 'a>> {
     let mut parts = request.split_whitespace();
 
@@ -50,7 +62,7 @@ pub fn parse_request_line<'a>(request: &'a str) -> Result<Request, Box<dyn Error
     let mut request = Request::new();
     request
         .method_mut(method)?
-        .uri_mut(uri)?
+        .uri_mut(uri)
         .version_mut(http_version)?;
 
     Ok(request)
@@ -89,9 +101,9 @@ impl<'a> Request<'a> {
     }
 
     /// Set Request HTTP uri
-    pub fn uri_mut(&mut self, uri: &'a str) -> Result<&mut Self, Box<dyn Error + 'a>> {
+    pub fn uri_mut(&mut self, uri: &'a str) -> &mut Self {
         self.uri = Path::new(uri);
-        Ok(self)
+        self
     }
 
     /// Set Request HTTP version
