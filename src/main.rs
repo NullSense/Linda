@@ -12,7 +12,7 @@ fn main() {
     let listener = TcpListener::bind(ip).expect("Unable to create listener.");
     info!("Server started on: {}{}", "http://", ip);
 
-    let pool = ThreadPool::new(4);
+    let pool = ThreadPool::new(16);
 
     for stream in listener.incoming() {
         match stream {
