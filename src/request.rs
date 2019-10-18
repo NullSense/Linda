@@ -35,6 +35,12 @@ impl fmt::Display for RequestLineNotFound {
 impl error::Error for RequestLineNotFound {}
 
 /// Return a Request-Line given a buffer
+///
+/// # Errors
+///
+/// Propagates errors up if:
+/// * buffer is not UTF-8
+/// * Request-Line was not found (RequestLineNotFound Error type)
 pub fn get_request_line(buffer: &[u8]) -> Result<&str, Box<dyn Error>> {
     let request = str::from_utf8(&buffer[..])?;
     Ok(request.lines().next().ok_or(RequestLineNotFound)?)
@@ -77,7 +83,22 @@ pub struct Request<'a> {
     version: &'a str,
 }
 
-/// Implement builder for Request
+/// Builder patterns for Request
+///
+/// # Examples
+///
+/// ```
+/// use linda::request::*;
+/// # use std::error::Error;
+///
+/// let mut request = Request::new();
+/// request
+/// .method_mut("GET")?
+/// .uri_mut("/")
+/// .version_mut("HTTP/1.1")?;
+///
+/// # Ok::<(), Box<Error>>(())
+/// ```
 impl<'a> Request<'a> {
     /// Get Request method
     pub fn method(&self) -> &Method {

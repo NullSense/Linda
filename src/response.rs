@@ -8,6 +8,7 @@ use std::{env, error, fmt, fs, str};
 use crate::Method;
 use crate::Request;
 
+/// Whenever an unsupported/invalid content type gets requested
 #[derive(Debug)]
 pub struct InvalidContentType(String);
 impl error::Error for InvalidContentType {}
@@ -136,6 +137,10 @@ fn add_file(path: &str, head: bool) -> Result<Response, Box<dyn Error>> {
 }
 
 /// Process Request, returning a Response
+///
+/// # Error
+///
+/// Should not error, except for rare cases when the URI string is not valid UTF-8
 pub fn response(request: &Request) -> Result<Response, Box<dyn Error>> {
     match *request.method() {
         Method::GET => add_file(
@@ -151,7 +156,14 @@ pub fn response(request: &Request) -> Result<Response, Box<dyn Error>> {
     }
 }
 
-/// HTTP Response representation
+/// HTTP Response
+///
+/// Response = Status-Line
+///           *(( general-header
+///           | response-header
+///           | entity-header ) CRLF)
+///             CRLF
+///           [ message-body ]
 #[derive(Default)]
 pub struct Response {
     status: StatusCode,
@@ -160,6 +172,10 @@ pub struct Response {
 }
 
 impl Response {
+    /// Creates a new Response object with defaults:
+    /// StatusCode::OK
+    /// body: None
+    /// empty Headers
     pub fn new() -> Self {
         Response {
             status: StatusCode::OK,
@@ -168,7 +184,7 @@ impl Response {
         }
     }
 
-    /// Format Response object and return it as bytes to write to a buffer
+    /// Format Response object and return it as a Vec of bytes to write to a buffer
     pub fn format_response(&mut self) -> Vec<u8> {
         // Append Status-Line
         // Status-Line = HTTP-Version SP Status-Code SP Reason-Phrase CRLF
